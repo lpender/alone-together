@@ -6,20 +6,26 @@
     events:
       onReady: () ->
         console.log("ready")
-        # if Meteor.user()
-        #   console.log("yes")
-        # else
-        #   debugger
+        if Meteor.user()
+          console.log("user found")
+        else
+          console.log "no user"
+          Songs.find().observe(
+            changed: (data, oldDoc) ->
+              console.log data
+              if data.state == 1
+                currentTime = new Date().getTime()
+                timeDifferenceInMs = data.currentTime - currentTime
+                debugger
+          )
           # Meteor.call("listenForTime")
         # if Meteor.user() != null
           # Meteor.call("listenForTime")
         # event.target.playVideo();
       ,
       onStateChange: Meteor.bindEnvironment (event) ->
-        console.log event
         currentTime = event.target.getCurrentTime()
         if Meteor.user()
-          console.log("user")
           Meteor.call("updateTime", { state: event.data, ytTime: currentTime, dateTime: new Date().getTime() })
   )
 
