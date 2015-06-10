@@ -43,14 +43,11 @@ Meteor.startup ()->
 
           console.log(
             event: "stateChange",
-            state: event.state
+            state: event.data
             timesState: timesState,
             timesChanged: timesChanged,
             isMaster: isMaster
           )
-
-          if timesState == 4 && timesChanged == 3
-            debugger
 
           if isMaster
             dateTime = new Date().getTime()
