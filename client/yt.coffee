@@ -1,6 +1,7 @@
 Meteor.startup ()->
   timesState = 0
   timesChanged = 0
+  offset = if navigator.userAgent.match(/(iPad|iPhone|iPod)/g) then 0.25 else 0
 
   @onYouTubeIframeAPIReady = () ->
     new YT.Player("player",
@@ -29,7 +30,7 @@ Meteor.startup ()->
                   player.target.playVideo()
                   setTimeout ->
                     diff = (new Date().getTime() - data.dateTime)/1000
-                    startTime = data.ytTime + diff
+                    startTime = data.ytTime + diff + offset
                     player.target.seekTo(startTime, true)
                     $("#bias").html(diff)
                   , 1000
