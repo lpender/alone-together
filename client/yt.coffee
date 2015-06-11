@@ -1,13 +1,12 @@
-_this = @
-
 Meteor.startup ()->
+  offset = 0
   timesState = 0
   timesChanged = 0
-  _this.offset = 0.25
   receivedPlayData = null
+  lastBuff = null
 
   @onYouTubeIframeAPIReady = () ->
-    _this.ytplayer = new YT.Player("player",
+    new YT.Player("player",
       height: "400",
       width: "600",
       videoId: "bX1hsVwZ7GU",
@@ -33,19 +32,13 @@ Meteor.startup ()->
             )
         ,
         onStateChange: (event) ->
-          if event.data == 1 || event.data == 2
+          console.log(event.data)
 
-            if event.data == 1 && receivedPlayData != null
-              diff = (new Date().getTime() - receivedPlayData.dateTime)/1000
-              startTime = receivedPlayData.ytTime + diff + offset
-              event.target.seekTo(startTime, true)
-              $("#bias").html(diff)
-              receivedPlayData = null
+          if $("#isMaster").is(":checked")
+            if event.data == 1 || event.data == 2
+              dateTime = Date.now()
+              ytTime = event.target.getCurrentTime()
 
-            dateTime = new Date().getTime()
-            ytTime = event.target.getCurrentTime()
-
-            if $("#isMaster").is(":checked")
               console.log(
                 event: "stateChange",
                 state: event.data
@@ -53,6 +46,27 @@ Meteor.startup ()->
               )
 
               Meteor.call("updateTime", { state: event.data, ytTime: ytTime, dateTime: dateTime })
+
+          else
+            if event.data == 3
+              if lastBuff == null
+                lastBuff = Date.now()
+              return
+
+            if event.data == 1
+              if lastBuff != null
+                offset = (Date.now() - lastBuff)/1000
+                console.log "offset:"+offset
+              else
+                offset = 0
+              if receivedPlayData != null
+                diff = (Date.now() - receivedPlayData.dateTime)/1000
+                currentTime = receivedPlayData.ytTime
+                $("#bias").html(diff)
+                startTime = currentTime + diff + offset
+                event.target.seekTo(startTime, true)
+                receivedPlayData = null
+              lastBuff = null
     )
 
   YT.load()
