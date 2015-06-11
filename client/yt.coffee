@@ -1,59 +1,62 @@
+_this = @
+
 Meteor.startup ()->
   timesState = 0
   timesChanged = 0
+  currentPlayerState = null
+  _this.offset = 0.25
 
   @onYouTubeIframeAPIReady = () ->
-    new YT.Player("player",
+    _this.ytplayer = new YT.Player("player",
       height: "400",
       width: "600",
-      videoId: "bX1hsVwZ7GU",
+      videoId: "Nb3okem4OCk",
       events:
         onReady: (player) ->
           console.log("ready")
           Songs.find().observe(
             changed: (data, oldDoc) ->
-              timesChanged++
-              isSlave = timesChanged > timesState
 
-              console.log(
-                event: "changed",
-                state: data.state
-                timesState: timesState,
-                timesChanged: timesChanged,
-                isSlave: isSlave
-              )
+              unless $("#isMaster").is(":checked")
+                console.log(
+                  event: "changed",
+                  # isSlave: isSlave
+                  state: data.state
+                  timesState: timesState,
+                  timesChanged: timesChanged,
+                  ytTime: data.ytTime,
+                  currentPlayerState: currentPlayerState,
+                )
 
-              if isSlave
                 if data.state == 1
-                  timesChanged++
                   player.target.playVideo()
-                  setTimeout ->
-                    diff = (new Date().getTime() - data.dateTime)/1000
-                    startTime = data.ytTime + diff
-                    player.target.seekTo(startTime, true)
-                    $("#bias").html(diff)
-                  , 1000
+                  diff = (new Date().getTime() - data.dateTime)/1000
+                  startTime = data.ytTime + diff + offset
+                  player.target.seekTo(startTime, true)
+                  $("#bias").html(diff)
                 else
                   player.target.pauseVideo()
             )
         ,
         onStateChange: (event) ->
-          timesState++
-          isMaster = timesState > timesChanged
+          currentPlayerState = event.data
 
-          console.log(
-            event: "stateChange",
-            state: event.data
-            timesState: timesState,
-            timesChanged: timesChanged,
-            isMaster: isMaster
-          )
-
-          if isMaster
+          if event.data == 1 || event.data == 2
+            timesState++
             dateTime = new Date().getTime()
-            currentTime = event.target.getCurrentTime()
+            ytTime = event.target.getCurrentTime()
 
-            Meteor.call("updateTime", { state: event.data, ytTime: currentTime, dateTime: dateTime })
+            if $("#isMaster").is(":checked")
+              console.log(
+                event: "stateChange",
+                # isMaster: isMaster
+                state: event.data
+                timesState: timesState,
+                timesChanged: timesChanged,
+                ytTime: ytTime,
+              )
+
+              Meteor.call("updateTime", { state: event.data, ytTime: ytTime, dateTime: dateTime })
     )
 
   YT.load()
