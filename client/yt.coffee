@@ -1,6 +1,6 @@
 Meteor.startup ()->
-  @offset = if navigator.userAgent.match(/(iPad|iPhone|iPod)/g) then 0.25 else 0
-  threshold = 0.05
+  justSwitched = false
+  threshold = 0.1
   receivedPlayData = null
   _this = @
 
@@ -35,15 +35,19 @@ Meteor.startup ()->
           console.log(event.data)
 
           if event.data == 1 && receivedPlayData != null
-            bias = (Date.now() - receivedPlayData.dateTime)/1000
-            currentTime = receivedPlayData.ytTime
-            desiredTime = currentTime + bias + offset
-            actualTime = event.target.getCurrentTime()
+            setTimeout ->
+              bias = (Date.now() - receivedPlayData.dateTime)/1000
+              currentTime = receivedPlayData.ytTime
+              desiredTime = currentTime + bias + offsetBias
+              actualTime = event.target.getCurrentTime()
+              diff = actualTime - desiredTime
 
-            if Math.abs(actualTime - desiredTime) > threshold
-              event.target.seekTo(desiredTime, true)
+              if Math.abs(diff) > threshold
+                event.target.seekTo(desiredTime, true)
 
-            $("#bias").html(bias)
+              $("#bias").html(bias)
+              $("#diff").html(diff)
+            , 10
             # receivedPlayData = null
 
           else if event.data == 1 || event.data == 2
@@ -56,7 +60,13 @@ Meteor.startup ()->
               ytTime: ytTime,
             )
 
-            Meteor.call("updateTime", { state: event.data, ytTime: ytTime, dateTime: dateTime })
+            unless justSwitched
+              Meteor.call("updateTime", { state: event.data, ytTime: ytTime, dateTime: dateTime - offsetBias})
+
+            justSwitched = true
+            setTimeout ->
+              justSwitched = false
+            , 500
 
     )
 

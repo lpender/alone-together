@@ -11,6 +11,10 @@
     It seems to work better if you use a computer as the master device.<br>
   <div> compensation bias: </div>
   <div id="bias"></div>
+  <div>time diff</div>
+  <div id="diff"></div>
+  <div>offset</div>
+  <div id="offset"></div>
   <form class="new-song">
     <input type="text" name="song" placeholder="Your Song"/>
     <input type="submit"/>
@@ -21,8 +25,5 @@
 <template name="player">
   <script src="https://www.youtube.com/iframe_api"></script>
   <div id="player"></div>
-  <label for="isMaster">
-    <input id="isMaster" type="checkbox">
-    Master
-  </label>
+  <input id="isMaster" type="checkbox"/>
 </template>
