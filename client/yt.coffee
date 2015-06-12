@@ -15,7 +15,7 @@ Meteor.startup ()->
     _this.ytPlayer = new YT.Player("player",
       height: "400",
       width: "600",
-      videoId: "XpIrFglZfQU",
+      videoId: "bX1hsVwZ7GU",
       events:
         onReady: (player) ->
           Songs.find().observe(
