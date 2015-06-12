@@ -1,7 +1,7 @@
 Meteor.startup ()->
   justSwitched = false
-  thresholdSec = 0.1
-  receivedPlayData = null
+  thresholdSec = 0.3
+  syncData = null
   _this = @
   ytStates = [
     'ENDED',
@@ -11,70 +11,68 @@ Meteor.startup ()->
     'CUED'
   ]
 
+  onPlayerPlay = (player, state) ->
+    masterNowMs = Date.now()
+    ytTimeSec = player.getCurrentTime()
+
+    console.log(event: 'onPlayerPlay', state: ytStates[state], ytTimeSec: ytTimeSec)
+    Meteor.call('updateTime', {state: state, ytTimeSec: ytTimeSec, masterNowMs: masterNowMs, masterOffsetMs: localOffsetMs})
+
+  onPlayerPause = (player, state) ->
+    console.log(event: 'onPlayerPause', state: ytStates[state])
+    Meteor.call('updateState', {state: state})
+
+  syncPlayer = (player, syncData) ->
+    console.log(event: 'syncPlayer', syncData: syncData)
+
+    masterYtTimeSec = syncData.ytTimeSec
+    actualYtTimeSec = player.getCurrentTime()
+
+    serverNowSentMs = syncData.masterNowMs #+ receivedPlayData.masterOffsetMs
+    serverNowReceivedMs = Date.now() #+ localOffsetMs;
+
+    latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
+    desiredYtTimeSec = masterYtTimeSec + latencySec
+    ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
+
+    if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val()
+      player.seekTo(desiredYtTimeSec, true)
+    else
+      syncData = null
+
+    $("#latency").html(latencySec)
+    $("#ytTimeDiff").html(ytTimeDiffSec)
+
   @onYouTubeIframeAPIReady = () ->
     _this.ytPlayer = new YT.Player("player",
       height: "400",
       width: "600",
       videoId: "bX1hsVwZ7GU",
       events:
+        onStateChange: (event) ->
+          if ytStates[event.data] == 'PLAYING'
+            if syncData != null
+              syncPlayer(event.target, syncData)
+            else
+              onPlayerPlay(event.target, event.data)
+          else if ytStates[event.data] == 'PAUSED'
+            onPlayerPause(event.target, event.data)
+        ,
         onReady: (player) ->
           Songs.find().observe(
-            changed: (data, oldDoc) ->
-              if data.videoId != oldDoc.videoId
-                player.target.loadVideoById(data.videoId)
+            changed: (newSong, oldSong) ->
+              if newSong.videoId != oldSong.videoId
+                player.target.loadVideoById(newSong.videoId)
               else
-                console.log(
-                  event: "changed",
-                  state: ytStates[data.state]
-                  ytTime: data.ytTimeSec,
-                )
+                console.log(event: 'songChanged', state: ytStates[newSong.state], ytTimeSec: newSong.ytTimeSec)
 
-                if ytStates[data.state] == 'PLAYING'
-                  receivedPlayData = data
+                if ytStates[newSong.state] == 'PLAYING'
+                  syncData = newSong
                   player.target.playVideo()
-
                 else
-                  receivedPlayData = null
+                  syncData = null
                   player.target.pauseVideo()
-            )
-        ,
-        onStateChange: (event) ->
-          console.log(PlayerState: ytStates[event.data])
-
-          if ytStates[event.data] == 'PLAYING' && receivedPlayData != null
-            setTimeout ->
-              biasSec = (Date.now() - receivedPlayData.dateTimeMs)/1000
-              currentTimeSec = receivedPlayData.ytTimeSec
-              desiredTimeSec = currentTimeSec + biasSec + offsetBiasMs
-              actualTimeSec = event.target.getCurrentTime()
-              diffSec = actualTimeSec - desiredTimeSec
-
-              if Math.abs(diffSec) > $('#thresholdSec').val()
-                event.target.seekTo(desiredTimeSec, true)
-
-              $("#bias").html(biasSec)
-              $("#diff").html(diffSec)
-            , 10
-            # receivedPlayData = null
-
-          else if ytStates[event.data] == 'PLAYING' || ytStates[event.data] == 'PAUSED'
-            dateTimeMs = Date.now()
-            ytTimeSec = event.target.getCurrentTime()
-
-            console.log(
-              event: "stateChange",
-              state: ytStates[event.data]
-              ytTimeSec: ytTimeSec,
-            )
-
-            unless justSwitched
-              Meteor.call("updateTime", {state: event.data, ytTimeSec: ytTimeSec, dateTimeMs: dateTimeMs - offsetBiasMs})
-
-            justSwitched = true
-            setTimeout ->
-              justSwitched = false
-            , 500
-
+          )
     )
 
   YT.load()

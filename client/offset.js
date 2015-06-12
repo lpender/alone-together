@@ -1,8 +1,8 @@
-this.offsetBiasMs = 0;
+this.localOffsetMs = 0;
 var offsets = [];
 var counter = 0;
 var maxTimes = 40;
-var beforeTimeMs = null;
+var beforeTime = null;
 
 // get average
 var mean = function(values) {
@@ -12,27 +12,27 @@ var mean = function(values) {
 };
 
 var getTimeDiff = function() {
-  beforeTimeMs = Date.now();
+  beforeTime = Date.now();
   $.ajax('/api/time', {
       type: 'GET',
       success: function(response) {
-          var nowMs, timeDiffMs, serverTimeMs, offsetMs;
+          var now, timeDiff, serverTime, offset;
           counter++;
 
           // Get offset
-          nowMs = Date.now();
-          timeDiffMs = (nowMs-beforeTimeMs)/2;
-          serverTimeMs = response.data.time-timeDiffMs;
-          offsetMs = nowMs-serverTimeMs;
+          now = Date.now();
+          timeDiff = (now-beforeTime)/2;
+          serverTime = response.data.time-timeDiff;
+          offset = now-serverTime;
 
           // Push to array
-          offsets.push(offsetMs);
+          offsets.push(offset);
           if (counter < maxTimes) {
             // Repeat
             getTimeDiff();
           } else {
-            offsetBiasMs = mean(offsets.slice([20,-1]))/1000;
-            $("#offset").html(offsetBiasMs)
+            localOffsetMs = mean(offsets.slice([20,-1]))/1000;
+            $("#localOffsetMs").html(localOffsetMs)
           }
       }
   });

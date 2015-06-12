@@ -9,15 +9,19 @@
     Open in multiple browsers/devices.<br>
     Click play/pause a few times to perfect the sync.<br>
     It seems to work better if you use a computer as the master device.<br>
-  <div>bias: </div>
-  <div id="bias"></div>
-  <div>time diff:</div>
-  <div id="diff"></div>
-  <div>offset:</div>
-  <div id="offset"></div>
+  <div>Network Latency (sec)</div>
+  <div id="latency"></div>
+  <div>YT Time Diff (sec)</div>
+  <div id="ytTimeDiff"></div>
+  <div>Local Offset (ms)</div>
+  <div id="localOffsetMs"></div>
   <div>
-    <label for="thresholdSec">threshold:</label>
-    <input type="text" id="thresholdSec" value="0.1"/>
+    <label for="isMaster">Master?</label>
+    <input id="isMaster" type="checkbox"/>
+  </div>
+  <div>
+    <label for="syncThreshold">Sync Threshold</label>
+    <input id="syncThreshold" type="text" value="0.1"/>
   </div>
   <form class="new-song">
     <input type="text" name="song" placeholder="Your Song"/>
@@ -29,5 +33,4 @@
 <template name="player">
   <script src="https://www.youtube.com/iframe_api"></script>
   <div id="player"></div>
-  <input id="isMaster" type="checkbox"/>
 </template>
