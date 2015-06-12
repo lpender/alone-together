@@ -2,6 +2,6 @@ if Songs.find().count() == 0
   Songs.insert(
     title: 'Song',
     state: 'stopped',
-    ytTime: 0,
-    dateTime: 0
+    ytTimeSec: 0,
+    dateTimeMs: 0
   )

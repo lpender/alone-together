@@ -1,6 +1,6 @@
 Meteor.startup ()->
   justSwitched = false
-  threshold = 0.1
+  thresholdSec = 0.1
   receivedPlayData = null
   _this = @
   ytStates = [
@@ -26,7 +26,7 @@ Meteor.startup ()->
                 console.log(
                   event: "changed",
                   state: ytStates[data.state]
-                  ytTime: data.ytTime,
+                  ytTime: data.ytTimeSec,
                 )
 
                 if ytStates[data.state] == 'PLAYING'
@@ -43,32 +43,32 @@ Meteor.startup ()->
 
           if ytStates[event.data] == 'PLAYING' && receivedPlayData != null
             setTimeout ->
-              bias = (Date.now() - receivedPlayData.dateTime)/1000
-              currentTime = receivedPlayData.ytTime
-              desiredTime = currentTime + bias + offsetBias
-              actualTime = event.target.getCurrentTime()
-              diff = actualTime - desiredTime
+              biasSec = (Date.now() - receivedPlayData.dateTimeMs)/1000
+              currentTimeSec = receivedPlayData.ytTimeSec
+              desiredTimeSec = currentTimeSec + biasSec + offsetBiasMs
+              actualTimeSec = event.target.getCurrentTime()
+              diffSec = actualTimeSec - desiredTimeSec
 
-              if Math.abs(diff) > threshold
-                event.target.seekTo(desiredTime, true)
+              if Math.abs(diffSec) > thresholdSec
+                event.target.seekTo(desiredTimeSec, true)
 
-              $("#bias").html(bias)
-              $("#diff").html(diff)
+              $("#bias").html(biasSec)
+              $("#diff").html(diffSec)
             , 10
             # receivedPlayData = null
 
           else if ytStates[event.data] == 'PLAYING' || ytStates[event.data] == 'PAUSED'
-            dateTime = Date.now()
-            ytTime = event.target.getCurrentTime()
+            dateTimeMs = Date.now()
+            ytTimeSec = event.target.getCurrentTime()
 
             console.log(
               event: "stateChange",
               state: ytStates[event.data]
-              ytTime: ytTime,
+              ytTimeSec: ytTimeSec,
             )
 
             unless justSwitched
-              Meteor.call("updateTime", { state: event.data, ytTime: ytTime, dateTime: dateTime - offsetBias})
+              Meteor.call("updateTime", {state: event.data, ytTimeSec: ytTimeSec, dateTimeMs: dateTimeMs - offsetBiasMs})
 
             justSwitched = true
             setTimeout ->
