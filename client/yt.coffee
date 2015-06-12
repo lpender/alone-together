@@ -49,7 +49,7 @@ Meteor.startup ()->
               actualTimeSec = event.target.getCurrentTime()
               diffSec = actualTimeSec - desiredTimeSec
 
-              if Math.abs(diffSec) > thresholdSec
+              if Math.abs(diffSec) > $('#thresholdSec').val()
                 event.target.seekTo(desiredTimeSec, true)
 
               $("#bias").html(biasSec)
