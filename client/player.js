@@ -15,6 +15,8 @@ Template.body.events({
 
       function (error, result) {
         var songId = result.data.items[0].id.videoId;
+        ytPlayer.pauseVideo()
+        ytPlayer.seekTo(0, true)
 
         Meteor.call("updateVideoId", songId)
       }
