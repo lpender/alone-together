@@ -1,6 +1,5 @@
 Meteor.startup ()->
   justSwitched = false
-  thresholdSec = 0.3
   syncData = null
   _this = @
   ytStates = [
@@ -11,37 +10,43 @@ Meteor.startup ()->
     'CUED'
   ]
 
-  onPlayerPlay = (player, state) ->
+  isMaster = ->
+    $("#isMaster").is(":checked")
+
+  onMasterPlay = (player, state) ->
     masterNowMs = Date.now()
     ytTimeSec = player.getCurrentTime()
 
-    console.log(event: 'onPlayerPlay', state: ytStates[state], ytTimeSec: ytTimeSec)
+    console.log(event: 'onMasterPlay', state: ytStates[state], ytTimeSec: ytTimeSec)
     Meteor.call('updateTime', {state: state, ytTimeSec: ytTimeSec, masterNowMs: masterNowMs, masterOffsetMs: localOffsetMs})
 
-  onPlayerPause = (player, state) ->
-    console.log(event: 'onPlayerPause', state: ytStates[state])
+  onMasterPause = (player, state) ->
+    console.log(event: 'onMasterPause', state: ytStates[state])
     Meteor.call('updateState', {state: state})
 
   syncPlayer = (player, syncData) ->
     console.log(event: 'syncPlayer', syncData: syncData)
 
-    masterYtTimeSec = syncData.ytTimeSec
-    actualYtTimeSec = player.getCurrentTime()
+    setTimeout ->
+      masterYtTimeSec = syncData.ytTimeSec
+      actualYtTimeSec = player.getCurrentTime()
 
-    serverNowSentMs = syncData.masterNowMs #+ receivedPlayData.masterOffsetMs
-    serverNowReceivedMs = Date.now() #+ localOffsetMs;
+      serverNowSentMs = syncData.masterNowMs #+ receivedPlayData.masterOffsetMs
+      serverNowReceivedMs = Date.now() #+ localOffsetMs;
 
-    latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
-    desiredYtTimeSec = masterYtTimeSec + latencySec
-    ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
+      latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
+      desiredYtTimeSec = masterYtTimeSec + latencySec
+      ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
 
-    if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val()
-      player.seekTo(desiredYtTimeSec, true)
-    else
-      syncData = null
+      if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val()
+        player.seekTo(desiredYtTimeSec, true)
+      else
+        syncData = null
 
-    $("#latency").html(latencySec)
-    $("#ytTimeDiff").html(ytTimeDiffSec)
+      $("#latency").html(latencySec)
+      $("#ytTimeDiff").html(ytTimeDiffSec)
+    , 10
+
 
   @onYouTubeIframeAPIReady = () ->
     _this.ytPlayer = new YT.Player("player",
@@ -50,13 +55,13 @@ Meteor.startup ()->
       videoId: "bX1hsVwZ7GU",
       events:
         onStateChange: (event) ->
-          if ytStates[event.data] == 'PLAYING'
-            if syncData != null
-              syncPlayer(event.target, syncData)
-            else
-              onPlayerPlay(event.target, event.data)
-          else if ytStates[event.data] == 'PAUSED'
-            onPlayerPause(event.target, event.data)
+          if isMaster()
+            if ytStates[event.data] == 'PLAYING'
+              onMasterPlay(event.target, event.data)
+            else if ytStates[event.data] == 'PAUSED'
+              onMasterPause(event.target, event.data)
+          else if syncData != null && ytStates[event.data] == "PLAYING"
+            syncPlayer(event.target, syncData)
         ,
         onReady: (player) ->
           Songs.find().observe(
@@ -66,12 +71,13 @@ Meteor.startup ()->
               else
                 console.log(event: 'songChanged', state: ytStates[newSong.state], ytTimeSec: newSong.ytTimeSec)
 
-                if ytStates[newSong.state] == 'PLAYING'
-                  syncData = newSong
-                  player.target.playVideo()
-                else
-                  syncData = null
-                  player.target.pauseVideo()
+                if !!!isMaster()
+                  if ytStates[newSong.state] == 'PLAYING'
+                    syncData = newSong
+                    player.target.playVideo()
+                  else
+                    syncData = null
+                    player.target.pauseVideo()
           )
     )
 
