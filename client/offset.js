@@ -5,15 +5,11 @@ var maxTimes = 40;
 var beforeTime = null;
 
 // get average
-var mean = function(array) {
-  var sum = 0;
-
-  array.forEach(function (value) {
-    sum += value;
-  });
-
-  return sum/array.length;
-}
+var mean = function(values) {
+  return _.reduce(values, function (sum, value) {
+      return sum + value;
+  }, 0) / values.length;
+};
 
 var getTimeDiff = function() {
   beforeTime = Date.now();
@@ -30,17 +26,17 @@ var getTimeDiff = function() {
           offset = now-serverTime;
 
           // Push to array
-          offsets.push(offset)
+          offsets.push(offset);
           if (counter < maxTimes) {
             // Repeat
             getTimeDiff();
           } else {
-            offsetBias = mean(offsets.slice([20,-1]))/1000;
+            var offsetBias = mean(offsets.slice([20,-1]))/1000;
             $("#offset").html(offsetBias)
           }
       }
   });
-}
+};
 
 // populate 'offsets' array and return average offsets
 getTimeDiff();

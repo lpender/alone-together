@@ -3,6 +3,13 @@ Meteor.startup ()->
   threshold = 0.1
   receivedPlayData = null
   _this = @
+  ytStates = [
+    'ENDED',
+    'PLAYING',
+    'PAUSED',
+    'BUFFERING',
+    'CUED'
+  ]
 
   @onYouTubeIframeAPIReady = () ->
     _this.ytPlayer = new YT.Player("player",
@@ -32,7 +39,7 @@ Meteor.startup ()->
             )
         ,
         onStateChange: (event) ->
-          console.log(event.data)
+          console.log(PlayerState: ytStates[event.data])
 
           if event.data == 1 && receivedPlayData != null
             setTimeout ->
