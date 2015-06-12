@@ -7,4 +7,6 @@ Meteor.startup ()->
 Meteor.methods(
   updateTime: (data) ->
     song = Songs.update({}, {$set: data})
+  updateVideoId: (videoId) ->
+    song = Songs.update({}, {$set: { videoId: videoId }})
 )

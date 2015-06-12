@@ -1,34 +1,39 @@
 Meteor.startup ()->
+  @offset = if navigator.userAgent.match(/(iPad|iPhone|iPod)/g) then 0.25 else 0
   offset = 0
   timesState = 0
   timesChanged = 0
   receivedPlayData = null
   lastBuff = null
+  cachedState = false
+  _this = @
 
   @onYouTubeIframeAPIReady = () ->
-    new YT.Player("player",
+    _this.ytPlayer = new YT.Player("player",
       height: "400",
       width: "600",
-      videoId: "bX1hsVwZ7GU",
+      videoId: "XpIrFglZfQU",
       events:
         onReady: (player) ->
           Songs.find().observe(
             changed: (data, oldDoc) ->
+              if data.videoId != oldDoc.videoId
+                player.target.loadVideoById(data.videoId)
+              else
+                unless $("#isMaster").is(":checked")
+                  console.log(
+                    event: "changed",
+                    state: data.state
+                    ytTime: data.ytTime,
+                  )
 
-              unless $("#isMaster").is(":checked")
-                console.log(
-                  event: "changed",
-                  state: data.state
-                  ytTime: data.ytTime,
-                )
+                  if data.state == 1
+                    receivedPlayData = data
+                    player.target.playVideo()
 
-                if data.state == 1
-                  receivedPlayData = data
-                  player.target.playVideo()
-
-                else
-                  receivedPlayData = null
-                  player.target.pauseVideo()
+                  else
+                    receivedPlayData = null
+                    player.target.pauseVideo()
             )
         ,
         onStateChange: (event) ->
