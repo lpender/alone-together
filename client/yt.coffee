@@ -25,11 +25,11 @@ Meteor.startup ()->
               else
                 console.log(
                   event: "changed",
-                  state: data.state
+                  state: ytStates[data.state]
                   ytTime: data.ytTime,
                 )
 
-                if data.state == 1
+                if ytStates[data.state] == 'PLAYING'
                   receivedPlayData = data
                   player.target.playVideo()
 
@@ -41,7 +41,7 @@ Meteor.startup ()->
         onStateChange: (event) ->
           console.log(PlayerState: ytStates[event.data])
 
-          if event.data == 1 && receivedPlayData != null
+          if ytStates[event.data] == 'PLAYING' && receivedPlayData != null
             setTimeout ->
               bias = (Date.now() - receivedPlayData.dateTime)/1000
               currentTime = receivedPlayData.ytTime
@@ -57,13 +57,13 @@ Meteor.startup ()->
             , 10
             # receivedPlayData = null
 
-          else if event.data == 1 || event.data == 2
+          else if ytStates[event.data] == 'PLAYING' || ytStates[event.data] == 'PAUSED'
             dateTime = Date.now()
             ytTime = event.target.getCurrentTime()
 
             console.log(
               event: "stateChange",
-              state: event.data
+              state: ytStates[event.data]
               ytTime: ytTime,
             )
 
