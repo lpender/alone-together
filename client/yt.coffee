@@ -34,19 +34,19 @@ Meteor.startup ()->
     Meteor.call('updateState', {state: state})
 
   syncPlayer = (player, syncData) ->
-    console.log(event: 'syncPlayer', syncData: syncData)
+    console.log(event: 'syncPlayer', syncData: syncData, localOffsetMs: localOffsetMs)
 
     masterYtTimeSec = syncData.ytTimeSec
     actualYtTimeSec = player.getCurrentTime()
 
-    serverNowSentMs = syncData.masterNowMs #+ syncData.masterOffsetMs
-    serverNowReceivedMs = Date.now() #+ localOffsetMs
+    serverNowSentMs = syncData.masterNowMs - syncData.masterOffsetMs
+    serverNowReceivedMs = Date.now() - localOffsetMs
 
     latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
     desiredYtTimeSec = masterYtTimeSec + latencySec
-    ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
+    ytTimeDiffSec = Math.abs(actualYtTimeSec - desiredYtTimeSec)
 
-    if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val()
+    if ytTimeDiffSec > $('#syncThreshold').val()
       player.seekTo(desiredYtTimeSec, true)
 
     syncData = null

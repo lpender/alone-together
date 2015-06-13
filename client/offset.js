@@ -12,7 +12,7 @@ var mean = function(values) {
 };
 
 var getTimeDiff = function() {
-  beforeTime = Date.now();
+  beforeMs = Date.now();
   $.ajax('/api/time', {
       type: 'GET',
       success: function(response) {
@@ -20,18 +20,18 @@ var getTimeDiff = function() {
           counter++;
 
           // Get offset
-          now = Date.now();
-          timeDiff = (now-beforeTime)/2;
-          serverTime = response.data.time-timeDiff;
-          offset = now-serverTime;
+          nowMs = Date.now(); // now
+          timeDiffMs = (nowMs-beforeMs)/2; // half the round trip
+          serverTimeMs = response.data.time-timeDiffMs; // calculate the serverTime
+          offsetMs = nowMs-serverTimeMs; // how far ahead are we?
 
           // Push to array
-          offsets.push(offset);
+          offsets.push(offsetMs);
           if (counter < maxTimes) {
             // Repeat
             getTimeDiff();
           } else {
-            localOffsetMs = mean(offsets.slice([20,-1]))/1000;
+            localOffsetMs = mean(offsets.slice([20,-1]));
             $("#localOffsetMs").html(localOffsetMs)
           }
       }
