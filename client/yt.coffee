@@ -1,6 +1,5 @@
 Meteor.startup ()->
   _this = @
-  justSwitched = false
   playInterval = null
   syncData = null
   timesSynced = 0
@@ -16,50 +15,62 @@ Meteor.startup ()->
     $("#isMaster").is(":checked")
 
   playFunction = (player,state) ->
-    masterNowMs = Date.now()
-    ytTimeSec = player.getCurrentTime()
-
-    console.log(event: 'onMasterPlay', state: ytStates[state], ytTimeSec: ytTimeSec)
-    Meteor.call('updateTime', {state: state, ytTimeSec: ytTimeSec, masterNowMs: masterNowMs, masterOffsetMs: localOffsetMs})
 
   onMasterPlay = (player, state) ->
-    clearInterval(playInterval)
-    playFunction(player, state)
-    # playInterval = setInterval ->
-    #   playFunction(player, state)
-    # , 30000
+    console.log(event: 'onMasterPlay', state: ytStates[state], ytTimeSec: ytTimeSec)
+
+    # Find local clock and playhead time, so they can be correlated.
+    localNowMs = Date.now()
+    ytTimeSec = player.getCurrentTime()
+
+    # Update db
+    Meteor.call('updateTime', {
+      state: state,
+      ytTimeSec: ytTimeSec,
+      masterNowMs: localNowMs
+      masterOffsetMs: localOffsetMs
+    })
 
   onMasterPause = (player, state) ->
     console.log(event: 'onMasterPause', state: ytStates[state])
-    clearInterval(playInterval)
+
+    # Update db
     Meteor.call('updateState', {state: state})
 
   syncPlayer = (player, syncData) ->
     console.log(event: 'syncPlayer', syncData: syncData, localOffsetMs: localOffsetMs)
+
     timesSynced++
 
+    # Get YouTube seek times
     masterYtTimeSec = syncData.ytTimeSec
-    actualYtTimeSec = player.getCurrentTime()
+    currentYtTimeSec = player.getCurrentTime()
 
-    serverNowSentMs = syncData.masterNowMs - syncData.masterOffsetMs
-    serverNowReceivedMs = Date.now() - localOffsetMs
+    # Get universal sent/received clock times
+    universalPlaySentMs = syncData.masterNowMs + syncData.masterOffsetMs
+    universalPlayRecdMs = Date.now() + localOffsetMs
 
-    latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
+    # Use universal times to compute the latency
+    latencySec = (universalPlayRecdMs - universalPlaySentMs)/1000
+
+    # Offset requested seek time with latency
     desiredYtTimeSec = masterYtTimeSec + latencySec
-    ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
 
-    # YT Seek doesn't seem too accurate
-    if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val() && timesSynced < 50
+    # Check offset between seek and playhead
+    diffYtTimeSec = currentYtTimeSec - desiredYtTimeSec
+
+    # If it's outside of the allowed threshold, seek again
+    if Math.abs(diffYtTimeSec) > $('#syncThreshold').val() && timesSynced < 50
       player.seekTo(desiredYtTimeSec, true)
     else
       timesSynced = 0
 
-    lastYtDiffSec = ytTimeDiffSec
-
+    # Good housekeeping
     syncData = null
 
+    # Display
     $("#latency").html(latencySec)
-    $("#ytTimeDiff").html(ytTimeDiffSec)
+    $("#ytTimeDiff").html(diffYtTimeSec)
 
 
   @onYouTubeIframeAPIReady = () ->

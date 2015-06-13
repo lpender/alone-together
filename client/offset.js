@@ -5,7 +5,7 @@ var maxTimes = 40;
 var beforeTime = null;
 
 // get average
-var mean = function(values) {
+this.mean = function(values) {
   return _.reduce(values, function (sum, value) {
       return sum + value;
   }, 0) / values.length;
