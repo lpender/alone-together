@@ -61,8 +61,10 @@ Meteor.startup ()->
 
     # If it's outside of the allowed threshold, seek again
     if Math.abs(diffYtTimeSec) > $('#syncThreshold').val() && timesSynced < 50
+      player.mute()
       player.seekTo(desiredYtTimeSec, true)
     else
+      player.unMute()
       timesSynced = 0
 
     # Good housekeeping
