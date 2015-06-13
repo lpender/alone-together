@@ -3,6 +3,7 @@ Meteor.startup ()->
   justSwitched = false
   playInterval = null
   syncData = null
+  timesSynced = 0
   ytStates = [
     'ENDED',
     'PLAYING',
@@ -24,9 +25,9 @@ Meteor.startup ()->
   onMasterPlay = (player, state) ->
     clearInterval(playInterval)
     playFunction(player, state)
-    playInterval = setInterval ->
-      playFunction(player, state)
-    , 5000
+    # playInterval = setInterval ->
+    #   playFunction(player, state)
+    # , 30000
 
   onMasterPause = (player, state) ->
     console.log(event: 'onMasterPause', state: ytStates[state])
@@ -35,6 +36,7 @@ Meteor.startup ()->
 
   syncPlayer = (player, syncData) ->
     console.log(event: 'syncPlayer', syncData: syncData, localOffsetMs: localOffsetMs)
+    timesSynced++
 
     masterYtTimeSec = syncData.ytTimeSec
     actualYtTimeSec = player.getCurrentTime()
@@ -44,10 +46,15 @@ Meteor.startup ()->
 
     latencySec = (serverNowReceivedMs - serverNowSentMs)/1000
     desiredYtTimeSec = masterYtTimeSec + latencySec
-    ytTimeDiffSec = Math.abs(actualYtTimeSec - desiredYtTimeSec)
+    ytTimeDiffSec = actualYtTimeSec - desiredYtTimeSec
 
-    if ytTimeDiffSec > $('#syncThreshold').val()
+    # YT Seek doesn't seem too accurate
+    if Math.abs(ytTimeDiffSec) > $('#syncThreshold').val() && timesSynced < 50
       player.seekTo(desiredYtTimeSec, true)
+    else
+      timesSynced = 0
+
+    lastYtDiffSec = ytTimeDiffSec
 
     syncData = null
 
