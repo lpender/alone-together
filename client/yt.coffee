@@ -3,6 +3,7 @@ Meteor.startup ()->
   playInterval = null
   syncData = null
   timesSynced = 0
+  maxTimesSynced = 256
   ytStates = [
     'ENDED',
     'PLAYING',
@@ -47,8 +48,8 @@ Meteor.startup ()->
     currentYtTimeSec = player.getCurrentTime()
 
     # Get universal sent/received clock times
-    universalPlaySentMs = syncData.masterNowMs + syncData.masterOffsetMs
-    universalPlayRecdMs = Date.now() + localOffsetMs
+    universalPlaySentMs = syncData.masterNowMs - syncData.masterOffsetMs
+    universalPlayRecdMs = Date.now() - localOffsetMs
 
     # Use universal times to compute the latency
     latencySec = (universalPlayRecdMs - universalPlaySentMs)/1000
@@ -60,7 +61,7 @@ Meteor.startup ()->
     diffYtTimeSec = currentYtTimeSec - desiredYtTimeSec
 
     # If it's outside of the allowed threshold, seek again
-    if Math.abs(diffYtTimeSec) > $('#syncThreshold').val() && timesSynced < 50
+    if Math.abs(diffYtTimeSec) > $('#syncThreshold').val() && timesSynced < maxTimesSynced
       player.mute()
       player.seekTo(desiredYtTimeSec, true)
     else
