@@ -22,8 +22,8 @@ var getTimeDiff = function() {
           // Get offset
           nowMs = Date.now(); // now
           timeDiffMs = (nowMs-beforeMs)/2; // half the round trip
-          serverTimeMs = response.data.time-timeDiffMs; // calculate the serverTime
-          offsetMs = nowMs-serverTimeMs; // how far ahead are we?
+          serverNowMs = response.data.time+timeDiffMs; // calculate the serverTime
+          offsetMs = nowMs-serverNowMs; // how far ahead are we?
 
           // Push to array
           offsets.push(offsetMs);
