@@ -1,6 +1,37 @@
 /* CSS declarations go here */
-input {
+html {
+  color: #333;
   font-size: 1.5em;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  text-align: center;
+}
+
+input {
+  font-size: 1em;
   padding: 1em;
-  margin: 2em;
+}
+
+.margin {
+  margin: 1em;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.span-6 {
+  float: left;
+  width: 50%;
+  box-sizing: border-box;
+  padding: 1em;
+}
+
+.span-12 {
+  float: left;
+  width: 100%;
+  padding: 1em;
+}
+
+h1, h2 {
+  text-align: center;
 }
