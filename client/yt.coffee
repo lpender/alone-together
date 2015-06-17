@@ -48,11 +48,14 @@ Meteor.startup ()->
     currentYtTimeSec = player.getCurrentTime()
 
     # Get universal sent/received clock times
-    universalPlaySentMs = syncData.masterNowMs - syncData.masterOffsetMs
-    universalPlayRecdMs = Date.now() - localOffsetMs
+    serverPlaySentMs = syncData.masterNowMs - syncData.masterOffsetMs
+    serverPlayRecdMs = Date.now() - localOffsetMs
+
+    # Show time diff
+    timeDiffMs = localOffsetMs - syncData.masterOffsetMs
 
     # Use universal times to compute the latency
-    latencySec = (universalPlayRecdMs - universalPlaySentMs)/1000
+    latencySec = (serverPlayRecdMs - serverPlaySentMs)/1000
 
     # Offset requested seek time with latency
     desiredYtTimeSec = masterYtTimeSec + latencySec
@@ -74,7 +77,7 @@ Meteor.startup ()->
     # Display
     $("#latency").html(latencySec)
     $("#ytTimeDiff").html(diffYtTimeSec)
-
+    $("#timeDiff").html(timeDiffMs)
 
   @onYouTubeIframeAPIReady = () ->
     _this.ytPlayer = new YT.Player("player",
