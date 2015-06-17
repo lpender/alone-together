@@ -1,9 +1,7 @@
-# hearbuds
+# Alone Together
 Synced YouTube Meteor Project
 
-[mugic](http://mugic.meteor.com) is the synthesis of magic and music.
-
-Be alone, together, in the secret garden of the mind.
+Be [alone-together](http://alone-together.meteor.com), in the secret garden of the mind.
 
 This project attempts to synchronize YT players for users viewing the same web page from different devices.
 
